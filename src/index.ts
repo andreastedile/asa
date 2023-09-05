@@ -38,6 +38,8 @@ import { samePosition } from "./position.js";
 import { Commitment } from "./commitment/commitment.js";
 import { BacktrackCommitment } from "./commitment/backtrack.js";
 import { reconsiderCautious } from "./reconsideration/cautious.js";
+import { PDDLPlanner } from "./planning/pddlplanner.js";
+import { MaxConsecutiveFailuresCommitment } from "./commitment/maxconsecutivefailures.js";
 
 const host = "http://localhost:8080";
 const token =
@@ -55,7 +57,8 @@ let state: State = { name: "deliberate" };
 
 let coordination: CoordiationState = { name: "disable" };
 
-const planner: Planner = new StandardPlanner();
+const stdPlanner: Planner = new StandardPlanner();
+const pddlPlanner = new PDDLPlanner();
 
 const executor = new PlanExecutor(api);
 
@@ -305,7 +308,13 @@ async function bdi() {
 
       let plan;
       try {
-        plan = await planner.plan(state.intention, graph);
+        if (state.intention.name == "GoTo") {
+          console.log(chalk.dim("Invoke PDDL planner"));
+          plan = await pddlPlanner.plan(state.intention, graph);
+        } else {
+          console.log(chalk.dim("Invoke standard planner"));
+          plan = await stdPlanner.plan(state.intention, graph);
+        }
       } catch (error) {
         console.log(chalk.bold.red(`Planner failure: ${error}`));
 
@@ -318,6 +327,7 @@ async function bdi() {
       state = { name: "execute", intention: state.intention };
 
       const commitment: Commitment = new BacktrackCommitment(1000, 5, 3, 1000);
+      // const commitment: Commitment = new MaxConsecutiveFailuresCommitment(10);
 
       const success = await executor.execute(plan, {
         handlePre(action: Action) {
@@ -418,7 +428,7 @@ async function multiAgentBdi() {
 
       let plan;
       try {
-        plan = await planner.plan(state.intention, graph);
+        plan = await stdPlanner.plan(state.intention, graph);
       } catch (error) {
         console.log(chalk.bold.red(`Planner failure: ${error}`));
 

@@ -157,10 +157,10 @@ export class PDDLPlanner implements Planner {
     if (json.status == "error") {
       return Promise.reject(`No shortest path from ${me.position} to ${intention.destination}`);
     } else if (json.result.plan) {
-      console.log("PDDL plan found:");
-      for (const action of json.result.plan) {
-        console.log(action.name);
-      }
+      // console.log("PDDL plan found:");
+      // for (const action of json.result.plan) {
+        // console.log(action.name);
+      // }
 
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore
